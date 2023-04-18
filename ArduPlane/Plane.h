@@ -395,6 +395,8 @@ private:
     float mean_PV3;
     float mean_throttle;
     uint8_t throttle_sample_loop;
+
+    bool geofence_breached;
     
     //END EDITED PART
 
