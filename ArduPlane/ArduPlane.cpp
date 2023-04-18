@@ -133,6 +133,7 @@ const AP_Scheduler::Task Plane::scheduler_tasks[] = {
 #if LANDING_GEAR_ENABLED == ENABLED
     SCHED_TASK(landing_gear_update, 5, 50, 159),
 #endif
+    SCHED_TASK(check_th_speed, 0.1, 10, 162),
 };
 
 void Plane::get_scheduler_tasks(const AP_Scheduler::Task *&tasks,
@@ -543,7 +544,8 @@ void Plane::update_alt()
             gcs().send_text(MAV_SEVERITY_WARNING,"Airspeed dual sensors alert,delta of %f m/s",smooth_airspeed_dual_sensors_delta);
         }
     }
-    
+    check_th_speed();
+
     update_flight_stage();
 
     if (control_mode->does_auto_throttle() && !throttle_suppressed) {

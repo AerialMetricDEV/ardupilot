@@ -390,6 +390,12 @@ private:
     float p_error_drift;
     float p_alt_offset;
 
+    float smoothed_th_out;
+    float prev_total_height_m;
+    float mean_PV3;
+    float mean_throttle;
+    uint8_t throttle_sample_loop;
+    
     //END EDITED PART
 
 
@@ -897,6 +903,7 @@ private:
     void calc_nav_yaw_coordinated(float speed_scaler);
     void calc_nav_yaw_course(void);
     void calc_nav_yaw_ground(void);
+    void check_th_speed(void);
 
     // Log.cpp
     uint32_t last_log_fast_ms;
