@@ -1,3 +1,12 @@
+Release 4.2.e2.6 18th April 2023
+------------------------------
+- Add fictive parachute release when geofence is reached
+
+Release 4.2.e2.5 18th April 2023
+------------------------------
+- Add the function check_th_sp() in attitude.cpp, writting in the log the correlations between Power from throttle and energy variations
+- Add attributes in Plane.h
+
 Release 4.2.e2.4 6th April 2023
 ------------------------------
 - Change calculation for parachute altitude: Baro Terr altitude adjusted with lidar alt (adjust offset if we have 20 healthy value of lidar in range)
