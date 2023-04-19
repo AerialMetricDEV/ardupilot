@@ -133,7 +133,6 @@ const AP_Scheduler::Task Plane::scheduler_tasks[] = {
 #if LANDING_GEAR_ENABLED == ENABLED
     SCHED_TASK(landing_gear_update, 5, 50, 159),
 #endif
-    SCHED_TASK(check_th_speed, 0.1, 10, 162),
 };
 
 void Plane::get_scheduler_tasks(const AP_Scheduler::Task *&tasks,
