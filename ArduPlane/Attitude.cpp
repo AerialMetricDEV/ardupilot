@@ -862,7 +862,7 @@ void Plane::check_th_speed(void){
         mean_throttle = mean_throttle / sample_size;
         mean_PV3 = mean_PV3 / sample_size;
         mean_PV3 = (mean_PV3* 65 / (1.5*1000000000));
-        float mean_P_add = mean_throttle - mean_PV3;
+        float mean_P_add = mean_throttle - 68;
         float total_height_m = barometer.get_altitude() + ((aspeed*aspeed)/(2*9.80665f));
         float delta_total_height_m = total_height_m - prev_total_height_m;
         float ratio = delta_total_height_m/mean_P_add;
