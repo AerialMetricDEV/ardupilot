@@ -390,7 +390,7 @@ private:
     float p_error_drift;
     float p_alt_offset;
 
-    float smoothed_th_out;
+    //float smoothed_th_out;
     float prev_total_height_m;
     float mean_PV3;
     float mean_throttle;

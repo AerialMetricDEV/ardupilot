@@ -865,11 +865,13 @@ void Plane::check_th_speed(void){
         float mean_P_add = mean_throttle - 68;
         float total_height_m = barometer.get_altitude() + ((aspeed*aspeed)/(2*9.80665f));
         float delta_total_height_m = total_height_m - prev_total_height_m;
-        float ratio = delta_total_height_m/mean_P_add;
-        if(ratio*ratio > 100){
-            ratio = 10;
-        }
-        AP::logger().Write("THSP","TimeUS,th_m,dth_m,P_add,OutP_100,PV3,ratio","Qffffff",AP_HAL::micros64(),total_height_m,delta_total_height_m,mean_P_add,mean_throttle,mean_PV3,ratio);
+        AP::logger().Write("THSP", "TimeUS,thm,dthm,Padd,OutP100,PV3", "Qfffff",
+                                    AP_HAL::micros64(),
+                                    total_height_m*1.0,
+                                    delta_total_height_m*1.0,
+                                    mean_P_add*1.0,
+                                    mean_throttle*1.0,
+                                    mean_PV3*1.0);
         throttle_sample_loop = 0;
         prev_total_height_m = total_height_m;
         mean_PV3 = 0;

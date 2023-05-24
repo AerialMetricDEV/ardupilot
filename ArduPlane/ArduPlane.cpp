@@ -541,7 +541,7 @@ void Plane::update_alt()
     } 
 #endif
 
-    if (AIRSPEED_MAX_SENSORS == 2){
+    if (AIRSPEED_MAX_SENSORS == 2 && !quadplane.is_flying_vtol() && quadplane.in_transition()){
         airspeed_dual_sensors_delta = airspeed.get_raw_airspeed(1)-airspeed.get_raw_airspeed(0);
         smooth_airspeed_dual_sensors_delta = 0.95*smooth_airspeed_dual_sensors_delta+0.05*airspeed_dual_sensors_delta;
         if (smooth_airspeed_dual_sensors_delta*smooth_airspeed_dual_sensors_delta > g.pitot_delta_tolerance*g.pitot_delta_tolerance*1.0f && 0.5f*(airspeed.get_raw_airspeed(1)+airspeed.get_raw_airspeed(0)) > 10.0f){  //check if delta_airspeed is higher than tolerance and if mean airspeed is higher than 4m/s
