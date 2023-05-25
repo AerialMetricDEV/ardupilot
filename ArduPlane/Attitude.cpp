@@ -846,6 +846,7 @@ void Plane::check_th_speed(void){
     if (throttle_sample_loop < sample_size){
         float aspeed;
         if(!ahrs.airspeed_estimate(aspeed)){
+            throttle_sample_loop = throttle_sample_loop + 1;
             return;
         }   
         mean_throttle = mean_throttle + SRV_Channels::get_output_scaled(SRV_Channel::k_throttle);
@@ -865,21 +866,23 @@ void Plane::check_th_speed(void){
         float mean_P_add = mean_throttle - 68;
         float total_height_m = barometer.get_altitude() + ((aspeed*aspeed)/(2*9.80665f));
         float delta_total_height_m = total_height_m - prev_total_height_m;
-        float ratio = 0;
+/*         float ratio = 0;
         if (fabsf(mean_P_add)>7 || fabsf(delta_total_height_m)>5){
             ratio = delta_total_height_m/mean_P_add;
             if (fabsf(ratio) >100){
                 ratio = 100*ratio/fabsf(ratio);
             }
-        }
-        AP::logger().Write("THSP", "TimeUS,thm,dthm,Padd,OutP100,PV3,ratio", "Qffffff",
+        } */
+        float offset = mean_throttle - 0.94118*delta_total_height_m;
+
+        AP::logger().Write("THSP", "TimeUS,thm,dthm,Padd,OutP100,PV3,offset", "Qffffff",
                                     AP_HAL::micros64(),
                                     total_height_m*1.0,
                                     delta_total_height_m*1.0,
                                     mean_P_add*1.0,
                                     mean_throttle*1.0,
                                     mean_PV3*1.0,
-                                    ratio);
+                                    offset);
         throttle_sample_loop = 0;
         prev_total_height_m = total_height_m;
         mean_PV3 = 0;
