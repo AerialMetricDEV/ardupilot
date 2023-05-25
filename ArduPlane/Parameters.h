@@ -353,11 +353,13 @@ public:
         k_param_fence,         // vehicle fence
         k_param_acro_yaw_rate,
         k_param_pitot_delta_tolerance, //new param
+        k_param_dist_max_traj, //new param
     };
 
     AP_Int16 format_version;
 
     AP_Float pitot_delta_tolerance;
+    AP_Int16 dist_max_traj;
 
     // Telemetry control
     //

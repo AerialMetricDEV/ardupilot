@@ -21,6 +21,15 @@ const AP_Param::Info Plane::var_info[] = {
     // @Increment: 1
     GSCALAR(pitot_delta_tolerance,         "PITOT_DELTA", 2.0),
 
+    // @Param: DIST_TRAJ
+    // @DisplayName: tolerance of distance bewteen plane and targeted segment
+    // @Description: Parachute will be released if plane is too far from segment
+    // @User: Standard
+    // @Units: m
+    // @Range: 0 2000
+    // @Increment: 1
+    GSCALAR(dist_max_traj,         "DIST_TRAJ", 0),
+
     // @Param: FORMAT_VERSION
     // @DisplayName: Eeprom format version number
     // @Description: This value is incremented when changes are made to the eeprom format

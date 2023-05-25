@@ -533,6 +533,10 @@ void Plane::update_alt()
     parachute.set_sink_rate(auto_state.sink_rate);
     parachute.set_sink_rate_edit(auto_state.sink_rate,relative_alt_parachute_m,in_vtol);
 #endif
+    if((g.dist_max_traj != 0) && nav_controller->crosstrack_error()>g.dist_max_traj && (!geofence_breached)){
+        gcs().send_text(MAV_SEVERITY_WARNING, "Fictive parachute release: auto geofence breached");
+        geofence_breached = true;
+    }
 #if AC_FENCE == ENABLED
     uint16_t breach_nb = fence.get_breach_count();
     if(breach_nb != 0 && (!geofence_breached)){
