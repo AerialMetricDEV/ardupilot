@@ -1,3 +1,9 @@
+Release 4.3.e1.1 1st June 2023
+---------------------------
+- Based on Plane-4.3.7
+- Change frequency of control switch from 7Hz to 3Hz
+
+
 Release 4.3.7 31st May 2023
 ---------------------------
 
