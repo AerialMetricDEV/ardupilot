@@ -81,6 +81,70 @@ const AP_Param::GroupInfo AP_Parachute::var_info[] = {
     // @User: Standard
     AP_GROUPINFO("OPTIONS", 7, AP_Parachute, _options, 0),
 
+    // @Param: VTOL_SK
+    // @DisplayName: Critical sink speed rate in vtol
+    // @Description: release parachute when VTOL Critical sink rate is reached
+    // @Range: 0 15
+    // @Units: m/s
+    // @Increment: 1
+    // @User: Standard
+    AP_GROUPINFO("VTOL_SK", 8, AP_Parachute, _VTOL_critical_sink, 5.0f),
+
+    // @Param: VTOL_SK_T
+    // @DisplayName: Time needed under VTOL_CRT_SINK to release parachute
+    // @Description: decision to release parachute is taken after this time
+    // @Range: 0 1100
+    // @Units: ms
+    // @Increment: 1
+    // @User: Standard
+    AP_GROUPINFO("VTOL_SK_T", 9, AP_Parachute, _VTOL_sink_time, 425),
+
+    // @Param: CRT_TBC
+    // @DisplayName: critical time before crash
+    // @Description: parachute is released when estimated time before crash is lower than critical time before crash during enough time
+    // @Range: 0 22500
+    // @Units: ms
+    // @Increment: 100
+    // @User: Standard
+    AP_GROUPINFO("CRT_TBC", 10, AP_Parachute, _critical_TBC, 11225),
+
+    // @Param: LOOP_TMAX
+    // @DisplayName: In cruise, time needed in sink state to release parachute at high altitude
+    // @Description: parachute is released when estimated time before crash is lower than critical time before crash during loop_tmax ms
+    // @Range: 1000 4250
+    // @Units: ms
+    // @Increment: 100
+    // @User: Standard
+    AP_GROUPINFO("LOOP_TMAX", 11, AP_Parachute, _loop_Tmax, 2000),
+
+    // @Param: LOOP_TMIN
+    // @DisplayName: In cruise, time needed in sink state to release parachute at low altitude
+    // @Description: parachute is released when estimated time before crash is lower than critical time before crash during loop_tmin ms
+    // @Range: 0 2250
+    // @Units: ms
+    // @Increment: 100
+    // @User: Standard
+    AP_GROUPINFO("LOOP_TMIN", 12, AP_Parachute, _loop_Tmin, 425),
+
+    // @Param: ALT_TMAX
+    // @DisplayName: In cruise, altitude where Tmax is reached
+    // @Description: the time tolerance in sink state is higher at high altitude and reach LOOP_TMAX at ALT_TMAX
+    // @Range: 60 800
+    // @Units: m
+    // @Increment: 10
+    // @User: Standard
+    AP_GROUPINFO("ALT_TMAX", 13, AP_Parachute, _alt_Tmax, 120),
+
+    // @Param: ALT_TMIN
+    // @DisplayName: In cruise, altitude where Tmin is reached
+    // @Description: the time tolerance in sink state is lower at low altitude and reach LOOP_TMIN at ALT_TMIN
+    // @Range: 0 100
+    // @Units: m
+    // @Increment: 10
+    // @User: Standard
+    AP_GROUPINFO("ALT_TMIN", 14, AP_Parachute, _alt_Tmin, 40),
+
+
     AP_GROUPEND
 };
 
@@ -182,13 +246,95 @@ void AP_Parachute::set_sink_rate(float sink_rate)
     }
 }
 
+void AP_Parachute::set_sink_rate_edit(float sink_rate,float relative_alt_parachute_m,bool in_vtol)
+{
+    // derive ETBC and avoids divions/0 issues
+    if (fabsf(sink_rate) < 0.5){
+        estimated_time_before_crash_ms = 1000.0f*relative_alt_parachute_m/0.5; //if drone is not sinking, or sinking very slowly, we will state that its sink rate is 0.5 m/s
+    }
+    else{
+        estimated_time_before_crash_ms = 1000.0f*relative_alt_parachute_m/sink_rate; //elsewhere, whe derive the time (in ms) before drone hit the ground 
+    } 
+
+
+    if (_is_flying){ //part where logs are written in FPAR
+        float log_etbc = estimated_time_before_crash_ms;
+        if (log_etbc < 0 || log_etbc > 40000){
+            log_etbc = 40000.0f; //make the FPAR logs easier to read 
+        }
+        if (_sink_time_ms_edit != 0){
+            AP::logger().Write("FPAR","TimeUS,ETBC_s,sink_time,loop_time,AGL,SR","Qfffff",AP_HAL::micros64(),log_etbc,(AP_HAL::millis() - _sink_time_ms_edit)*1.0f,loop_time_ms*1.0f,relative_alt_parachute_m,sink_rate);
+        }
+        else{
+        AP::logger().Write("FPAR","TimeUS,ETBC_s,sink_time,loop_time,AGL,SR","Qfffff",AP_HAL::micros64(),log_etbc,0*1.0f,loop_time_ms*1.0f,relative_alt_parachute_m,sink_rate); 
+        }
+    }
+
+    // reset sink time if critical sink rate check is disabled or vehicle is not flying or too low
+    if (!_is_flying || relative_alt_parachute_m < 20) {
+        _sink_time_ms_edit = 0;
+        return;
+    }
+
+
+    // reset sink_time if vehicle is not sinking too fast in vtol
+    if (in_vtol){
+        if (sink_rate <= _VTOL_critical_sink){
+            _sink_time_ms_edit = 0;
+            return;
+        }
+    }
+
+    // reset sink_time if vehicle is far from hitting the ground (in time)
+    else{
+        if(estimated_time_before_crash_ms < 0 || estimated_time_before_crash_ms >= _critical_TBC || _critical_TBC <= 0){
+            _sink_time_ms_edit = 0;
+            return;
+        }
+
+    }
+
+   // start time when sinking too fast
+    if (_sink_time_ms_edit == 0) {
+        _sink_time_ms_edit = AP_HAL::millis(); //keep in memory the time we started to sink
+    }
+
+    // In this part we set the time needed under sink state to release parachute
+    if(in_vtol){
+        loop_time_ms =_VTOL_sink_time; //in vtol this time is fixed (a input parameter)
+    }
+    // In cruise, this time is an affine law (less time needed when close to the ground) bounded by the 2 points we sets
+    else{
+        uint32_t loop_tmin = _loop_Tmin;
+        uint32_t loop_tmax = _loop_Tmax; //convert _loop_tmin and _loop_tmax to uint to be compared to uint
+        uint32_t k_parachute_law = (_loop_Tmax-_loop_Tmin)/(_alt_Tmax-_alt_Tmin); // k is in  ms / m
+        uint32_t zero_h_parachute_law = _loop_Tmax - k_parachute_law*_alt_Tmax; // in ms
+        loop_time_ms = k_parachute_law*relative_alt_parachute_m + zero_h_parachute_law;
+        if (loop_time_ms < loop_tmin){
+            loop_time_ms = _loop_Tmin;
+        }
+        if (loop_time_ms > loop_tmax){
+            loop_time_ms = _loop_Tmax;
+        }
+    }
+}
+
+
 // trigger parachute release if sink_rate is below critical_sink_rate for 1sec
 void AP_Parachute::check_sink_rate()
 {
     // return immediately if parachute is being released or vehicle is not flying
-    if (_release_initiated || !_is_flying) {
+    if (!_is_flying) {
         return;
     }
+
+    if ((_sink_time_ms_edit > 0) && ((AP_HAL::millis() - _sink_time_ms_edit) > loop_time_ms)) {
+        gcs().send_text(MAV_SEVERITY_WARNING, "Fictive Parachute released");
+    }
+
+    if (_release_initiated) {
+        return;
+    }   
 
     // if vehicle is sinking too fast for more than a second release parachute
     if ((_sink_time_ms > 0) && ((AP_HAL::millis() - _sink_time_ms) > 1000)) {

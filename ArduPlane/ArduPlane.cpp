@@ -63,7 +63,7 @@ const AP_Scheduler::Task Plane::scheduler_tasks[] = {
     SCHED_TASK(check_short_failsafe,   50,    100,   9),
     SCHED_TASK(update_speed_height,    50,    200,  12),
     SCHED_TASK(update_throttle_hover, 100,     90,  24),
-    SCHED_TASK(read_control_switch,     7,    100,  27),
+    SCHED_TASK(read_control_switch,     3,    100,  27),
     SCHED_TASK(update_GPS_50Hz,        50,    300,  30),
     SCHED_TASK(update_GPS_10Hz,        10,    400,  33),
     SCHED_TASK(navigate,               10,    150,  36),
@@ -535,8 +535,25 @@ void Plane::update_alt()
     // low pass the sink rate to take some of the noise out
     auto_state.sink_rate = 0.8f * auto_state.sink_rate + 0.2f*sink_rate;
 #if PARACHUTE == ENABLED
+    bool in_vtol = quadplane.is_flying_vtol();
+    bool in_vtol_to = (quadplane.in_vtol_takeoff() || quadplane.in_transition());
+    float relative_alt_parachute_m = relative_ground_altitude_parachute(true,in_vtol,in_vtol_to);
     parachute.set_sink_rate(auto_state.sink_rate);
+    parachute.set_sink_rate_edit(auto_state.sink_rate,relative_alt_parachute_m,in_vtol);
 #endif
+
+    if (AIRSPEED_MAX_SENSORS == 2 && is_flying() && !quadplane.is_flying_vtol() && 0.5f*(airspeed.get_raw_airspeed(1)+airspeed.get_raw_airspeed(0)) > 16.0f){
+        float airspeed_dual_sensors_delta = airspeed.get_raw_airspeed(1)-airspeed.get_raw_airspeed(0);
+        smooth_airspeed_dual_sensors_delta = 0.95*smooth_airspeed_dual_sensors_delta+0.05*airspeed_dual_sensors_delta;
+        if (smooth_airspeed_dual_sensors_delta*smooth_airspeed_dual_sensors_delta > g.pitot_delta_tolerance*g.pitot_delta_tolerance*1.0f){  //check if delta_airspeed is higher than tolerance
+            gcs().send_text(MAV_SEVERITY_WARNING,"Dual sensors alert,delta of %f m/s",smooth_airspeed_dual_sensors_delta);
+        }
+    }
+    else{
+        smooth_airspeed_dual_sensors_delta = 0;
+    }
+
+    check_th_speed();
 
     update_flight_stage();
 
