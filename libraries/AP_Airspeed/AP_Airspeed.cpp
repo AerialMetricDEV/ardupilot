@@ -730,7 +730,6 @@ void AP_Airspeed::handle_msp(const MSP::msp_airspeed_data_message_t &pkt)
 void AP_Airspeed::swap_pitot()
 {
 
-    //uint8_t next_read = 1 - get_primary();
     for (uint8_t i=0; i<AIRSPEED_MAX_SENSORS; i++) {
         if (healthy(i) && (get_primary() != i)) {
                 primary_sensor.set(i);
