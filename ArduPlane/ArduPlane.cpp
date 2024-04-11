@@ -544,11 +544,16 @@ void Plane::update_alt()
     parachute.set_sink_rate_edit(auto_state.sink_rate,relative_alt_parachute_m,in_vtol);
 #endif
 
-    if (AIRSPEED_MAX_SENSORS == 2 && is_flying() && !quadplane.is_flying_vtol() && 0.5f*(airspeed.get_raw_airspeed(1)+airspeed.get_raw_airspeed(0)) > 16.0f){
-        float airspeed_dual_sensors_delta = airspeed.get_raw_airspeed(1)-airspeed.get_raw_airspeed(0);
+    if (AIRSPEED_MAX_SENSORS == 2 && is_flying() && !quadplane.is_flying_vtol() && 0.5f*(airspeed.get_raw_airspeed(1)+airspeed.get_raw_airspeed(0)) > 16.0f && airspeed.use(0) && airspeed.use(1)){
+        float airspeed_dual_sensors_delta = airspeed.get_raw_airspeed(airspeed.get_primary())-airspeed.get_raw_airspeed(1-airspeed.get_primary());
         smooth_airspeed_dual_sensors_delta = 0.95*smooth_airspeed_dual_sensors_delta+0.05*airspeed_dual_sensors_delta;
         if (smooth_airspeed_dual_sensors_delta*smooth_airspeed_dual_sensors_delta > g.pitot_delta_tolerance*g.pitot_delta_tolerance*1.0f){  //check if delta_airspeed is higher than tolerance
             gcs().send_text(MAV_SEVERITY_WARNING,"Dual sensors alert,delta of %f m/s",smooth_airspeed_dual_sensors_delta);
+            if (smooth_airspeed_dual_sensors_delta > 0){
+                smooth_airspeed_dual_sensors_delta = 0;
+                airspeed.swap_pitot();
+                gcs().send_text(MAV_SEVERITY_WARNING,"pri : %d",airspeed.get_primary());
+            }
         }
     }
     else{

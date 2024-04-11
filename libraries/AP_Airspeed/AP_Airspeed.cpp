@@ -727,6 +727,21 @@ void AP_Airspeed::handle_msp(const MSP::msp_airspeed_data_message_t &pkt)
 }
 #endif 
 
+void AP_Airspeed::swap_pitot()
+{
+
+    //uint8_t next_read = 1 - get_primary();
+    for (uint8_t i=0; i<AIRSPEED_MAX_SENSORS; i++) {
+        if (healthy(i) && (get_primary() != i)) {
+                primary_sensor.set(i);
+                gcs().send_text(MAV_SEVERITY_WARNING,"primary airspeed now on %d",i);
+                break;
+            }
+        }
+    
+    return;
+}
+
 // @LoggerMessage: HYGR
 // @Description: Hygrometer data
 // @Field: TimeUS: Time since system startup
