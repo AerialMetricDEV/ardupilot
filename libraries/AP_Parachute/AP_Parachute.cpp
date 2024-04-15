@@ -337,13 +337,16 @@ void AP_Parachute::check_sink_rate()
         return;
     }
 
-    if ((_sink_time_ms_edit > 0) && ((AP_HAL::millis() - _sink_time_ms_edit) > loop_time_ms)) {
-        gcs().send_text(MAV_SEVERITY_WARNING, "Fictive Parachute released");
-    }
-
     if (_release_initiated) {
         return;
-    }    
+    }
+
+    if ((_sink_time_ms_edit > 0) && ((AP_HAL::millis() - _sink_time_ms_edit) > loop_time_ms)) {
+        gcs().send_text(MAV_SEVERITY_WARNING, "New code asks parachute release");
+        release();
+    }
+
+
 
     // if vehicle is sinking too fast for more than a second release parachute
     if ((_sink_time_ms > 0) && ((AP_HAL::millis() - _sink_time_ms) > 1000)) {

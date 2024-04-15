@@ -552,7 +552,6 @@ void Plane::update_alt()
             if (smooth_airspeed_dual_sensors_delta > 0){
                 smooth_airspeed_dual_sensors_delta = 0;
                 airspeed.swap_pitot();
-                gcs().send_text(MAV_SEVERITY_WARNING,"pri : %d",airspeed.get_primary());
             }
         }
     }
