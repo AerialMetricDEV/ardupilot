@@ -1,3 +1,22 @@
+Release .e3.5 17th April 2024
+------------------------------
+- Based on .e3.4
+- add a warning if new arspd_offset is far from last value
+
+
+Release .e3.4 15th April 2024
+------------------------------
+- Based on .e3.3
+- FPAR now really relases parachute
+
+
+Release .e3.3 5th April 2024
+------------------------------
+- Based on .e3.2
+- add a func to switch arspd_sensor in flight
+- operate a switch when one sensor gives lower airspeed than the other (target lower)
+
+
 Release .e3.2 1st June 2023
 ------------------------------
 - Based on .e3.1
