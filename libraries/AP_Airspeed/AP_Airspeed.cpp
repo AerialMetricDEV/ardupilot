@@ -560,7 +560,7 @@ void AP_Airspeed::update_calibration(uint8_t i, float raw_pressure)
             }
             float prev_offset = get_offset(i);
             param[i].offset.set_and_save(calibrated_offset);
-            if (fabs(prev_offset - calibrated_offset) > 40){
+            if (fabs(prev_offset - calibrated_offset) > 20){
                 GCS_SEND_TEXT(MAV_SEVERITY_WARNING, "Warning: arspd offset id %u far from last",i);
             }
             calibration_state[i] = CalibrationState::SUCCESS;
