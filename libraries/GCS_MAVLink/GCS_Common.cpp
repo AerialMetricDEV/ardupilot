@@ -2034,7 +2034,12 @@ void GCS_MAVLINK::send_scaled_pressure_instance(uint8_t instance, void (*send_fn
     int16_t temperature = 0; // Absolute pressure temperature
     int16_t temperature_press_diff = 0; // Differential pressure temperature
     if (instance < barometer.num_instances()) {
-        press_abs = barometer.get_pressure(instance) * 0.01f;
+        AP_Airspeed *airspeed = AP_Airspeed::get_singleton();
+        if (airspeed != nullptr &&
+            airspeed->enabled(instance)) 
+            {
+                press_abs = airspeed->get_airspeed(instance);
+            }
         temperature = barometer.get_temperature(instance)*100;
         have_data = true;
     }
