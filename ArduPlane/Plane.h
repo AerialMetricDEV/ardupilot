@@ -375,6 +375,7 @@ private:
     // The difference between airspeed measured by sensors if there are 2 sensors
     // float airspeed_dual_sensors_delta;
     float smooth_airspeed_dual_sensors_delta;
+    uint8_t pitot_loop_counter;
 
     uint16_t throttle_sample_loop;
     float mean_throttle;

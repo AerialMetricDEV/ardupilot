@@ -548,7 +548,13 @@ void Plane::update_alt()
         float airspeed_dual_sensors_delta = airspeed.get_raw_airspeed(airspeed.get_primary())-airspeed.get_raw_airspeed(1-airspeed.get_primary());
         smooth_airspeed_dual_sensors_delta = 0.95*smooth_airspeed_dual_sensors_delta+0.05*airspeed_dual_sensors_delta;
         if (smooth_airspeed_dual_sensors_delta*smooth_airspeed_dual_sensors_delta > g.pitot_delta_tolerance*g.pitot_delta_tolerance*1.0f){  //check if delta_airspeed is higher than tolerance
-            gcs().send_text(MAV_SEVERITY_WARNING,"Dual sensors alert,delta of %f m/s",smooth_airspeed_dual_sensors_delta);
+            if (pitot_loop_counter < 2){
+                gcs().send_text(MAV_SEVERITY_WARNING,"Dual sensors alert,delta of %f m/s",smooth_airspeed_dual_sensors_delta);
+                pitot_loop_counter = 32;
+            }
+            else{
+                pitot_loop_counter = pitot_loop_counter - 1;
+            }
             if (smooth_airspeed_dual_sensors_delta > 0){
                 smooth_airspeed_dual_sensors_delta = 0;
                 airspeed.swap_pitot();
