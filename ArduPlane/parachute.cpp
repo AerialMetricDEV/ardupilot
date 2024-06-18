@@ -9,6 +9,10 @@ void Plane::parachute_check()
 #if PARACHUTE == ENABLED
     parachute.update();
     parachute.check_sink_rate();
+    if (parachute.release_in_progress() && control_mode != &mode_manual){
+        set_mode(0,ModeReason::CRASH_FAILSAFE);
+    }
+
 #endif
 }
 
